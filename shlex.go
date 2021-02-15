@@ -26,6 +26,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"unicode"
 )
 
 /*
@@ -98,7 +99,8 @@ classifiers - those accepting extended non-ascii chars, or strict posix
 compatibility, for example.
 */
 type TokenClassifier struct {
-	typeMap map[int32]RuneTokenType
+	typeMap      map[int32]RuneTokenType
+	classifyFunc func(int32) RuneTokenType
 }
 
 func addRuneClass(typeMap *map[int32]RuneTokenType, runes string, tokenType RuneTokenType) {
@@ -119,11 +121,28 @@ func NewDefaultClassifier() *TokenClassifier {
 	addRuneClass(&typeMap, RUNE_ESCAPE, RUNETOKEN_ESCAPE)
 	addRuneClass(&typeMap, RUNE_COMMENT, RUNETOKEN_COMMENT)
 	return &TokenClassifier{
-		typeMap: typeMap}
+		typeMap:      typeMap,
+		classifyFunc: defaultClassifier,
+	}
+}
+
+func defaultClassifier(r int32) RuneTokenType {
+	switch {
+	case unicode.IsSpace(r):
+		return RUNETOKEN_SPACE
+	case unicode.IsGraphic(r):
+		return RUNETOKEN_CHAR
+	default:
+		return 0
+	}
 }
 
 func (classifier *TokenClassifier) ClassifyRune(rune int32) RuneTokenType {
-	return classifier.typeMap[rune]
+	rt, ok := classifier.typeMap[rune]
+	if !ok && classifier.classifyFunc != nil {
+		return classifier.classifyFunc(rune)
+	}
+	return rt
 }
 
 /*

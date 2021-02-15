@@ -92,6 +92,23 @@ func TestLexer(t *testing.T) {
 	}
 }
 
+func TestSplitUnicode(t *testing.T) {
+	testInput := "один два три"
+	expectedOutput := []string{"один", "два", "три"}
+	foundOutput, err := Split(testInput)
+	if err != nil {
+		t.Error("Split returned error:", err)
+	}
+	if len(expectedOutput) != len(foundOutput) {
+		t.Error("Split expected:", len(expectedOutput), "results. Found:", len(foundOutput), "results")
+	}
+	for i := range foundOutput {
+		if foundOutput[i] != expectedOutput[i] {
+			t.Error("Item:", i, "(", foundOutput[i], ") differs from the expected value:", expectedOutput[i])
+		}
+	}
+}
+
 func TestSplitSimple(t *testing.T) {
 	testInput := "one two three"
 	expectedOutput := []string{"one", "two", "three"}
